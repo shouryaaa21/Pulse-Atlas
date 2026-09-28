@@ -1,0 +1,59 @@
+// This is your Prisma schema file.
+// After setting up .env, run: npx prisma migrate dev --name init
+// to create these tables in your Postgres database.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// A cached response from the MedlinePlus condition/topic search, so we
+// don't hit the external API on every request.
+model CachedCondition {
+  id        String   @id @default(cuid())
+  query     String   @unique
+  title     String
+  summary   String
+  sourceUrl String
+  fetchedAt DateTime @default(now())
+}
+
+// A cached WHO Global Health Observatory data point for one country and
+// one indicator (e.g. life expectancy in a given year).
+model RegionIndicator {
+  id            String    @id @default(cuid())
+  countryCode   String
+  indicatorCode String
+  indicatorName String
+  year          Int?
+  value         Float?
+  fetchedAt     DateTime  @default(now())
+
+  @@unique([countryCode, indicatorCode, year])
+}
+
+// One item ingested from a real health-news RSS feed.
+model NewsItem {
+  id          String    @id @default(cuid())
+  sourceName  String
+  title       String
+  link        String    @unique
+  summary     String?
+  publishedAt DateTime?
+  fetchedAt   DateTime  @default(now())
+}
+
+// A personal note a user saves against a condition — the "Personal
+// Symptom Log" module from the frontend. No real auth wired up yet:
+// userId is just a plain string placeholder until you add one.
+model SymptomLogEntry {
+  id        String   @id @default(cuid())
+  userId    String
+  condition String
+  note      String
+  createdAt DateTime @default(now())
+}
